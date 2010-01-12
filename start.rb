@@ -70,7 +70,7 @@ config = { :lan => { :nic => lan_nic, :subnet => lan_subnet_range, :ip => lan_ip
 f.puts config.to_yaml
 
 # TODO Create real page with instructions on downloading MAUI
-puts "\n\nIt is requmented that you install the MAUI Cluster Scheduler."
+puts "\n\nIt is recommended that you install the MAUI Cluster Scheduler."
 puts "MAUI is free but has to be downladed indepently, instructions"
 puts "on downloading MAUI can be found at http://something.com/wiki/maui"
 puts "\n"
@@ -82,3 +82,7 @@ maui_url = gets.chomp
 config = { :maui => { :url => maui_url } }
 
 f.puts config.to_yaml
+
+system(`clear`)
+
+puts "Starting the install..."

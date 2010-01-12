@@ -1,30 +1,32 @@
 #!/usr/bin/ruby
 # This script will rebuild world and system
+# it will also install all software that is
+# required to run a bare bones cluster.
+#
 # Jacob Atkins
 # Univerisity of Virginia's College at Wise
 #
 # jta4j@mcs.uvawise.edu
 
-puts "Rebuilding the system will optimize all under laying programs"
-puts "This task isn't required but is highly recomended."
-puts "\n"
-puts "Would you like to rebuild the system? [Y/n]"
+require 'yaml'
+ 
+CONFIG = YAML::load(File.read('config.yml'))
 
-rebuild = gets.chomp
-
-while rebuild.upcase != "Y" || rebuild.upcase != "N"
-
-  if rebuild.upcase == "Y"
-    puts 'Building world'
-
-    `emerge -e world`
-
-    puts 'Building system'
-    `emerge -e system`
-  elsif rebuild.upcase == "N"
-    puts 'Moving to next step.'
-  else
-    puts "#{rebuild} is an option, please enter y or n"
-  end
+if CONFIG['world']['rebuild'] == true
+  puts 'Syncing the portage tree...'
+  `emerge --sync > log/portage_sync.log`
+  
+  puts 'Rebuilding the system...'
+  `emerge -e system > log/system_rebuild.log`
+  
+  puts 'Rebuilding the world...'
+  `emerge -e world > log/world_rebuild.log`
 end
+
+puts 'Installing openMPI, torque, and nfs-utils'
+
+`echo sys-cluster/torque server >> /etc/portage/pakage.use`
+`echo sys-cluster/openmpi pbs >> /etc/portage/package.use`
+
+`emerge openmpi torque nfs-utils`
 
