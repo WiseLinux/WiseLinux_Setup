@@ -86,3 +86,5 @@ f.puts config.to_yaml
 system(`clear`)
 
 puts "Starting the install..."
+
+`scripts/01_world.rb`
