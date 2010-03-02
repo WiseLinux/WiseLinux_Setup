@@ -2,27 +2,35 @@
 
 # Which network card is facing which network
 
-lan_ethernet = "eth0" # This is for the interface that will connect to the cluster
-wan_ethernet = "eth1" # This is for the interface that will connect to your network
+$lan_ethernet = "eth0" # This is for the interface that will connect to the cluster
+$wan_ethernet = "eth1" # This is for the interface that will connect to your network
 
 # IP addresses that will be used
 
-lan_subnet = "192.168.0.0\\24"	 # The subnet that you want for the cluster network
-lan_ip_address = "192.168.0.1"	 # The IP address of the master node on the cluster network
+	# Cluster network
 
-wan_ip_address = "143.60.60.27"	 # The IP address of the master node on your network; if you use DHCP for this type dhcp in the quotes
+	$lan_subnet = "192.168.0.0\\24"	   # The subnet that you want for the cluster network
+	$lan_ip = "192.168.0.1"	 	 # The IP address of the master node on the cluster network
+	$lan_broadcast = "192.168.0.255" # The broadcast address for the lan adapter
+	$lan_netmask = "255.255.255.0"   # Netmask for the lan 
+
+	# Public network - If you want to use dhcp for this, just set each value to dhcp
+
+	$wan_ip = "10.0.0.1"	 # The IP address of the master node on your network; if you use DHCP for this type dhcp in the quotes
+	$wan_broadcast = "10.0.0.255" 
+	$wan_netmask = "255.255.255.0"
 
 # Name servers that you would like to use
 # By Default the nameservers are set to OpenDNS
-name_server[0] = "208.67.222.222"
-name_server[1] = "208.67.220.220"
-name_server[2] = ""
-name_server[3] = ""
+$name_server[0] = "208.67.222.222"
+$name_server[1] = "208.67.220.220"
+$name_server[2] = ""
+$name_server[3] = ""
 
 # MAUI Cluster Scheduler URL
 # In order to install MAUI, you need to download it and place it in a location that is accesiable by wget
 
-maui_url = "http://www.example.com/maui.tar.gz"
+$maui_url = "http://www.example.com/maui.tar.gz"
 
 ##################################################################################################################
 #  DO NOT EDIT BELOW THIS LINE
@@ -80,11 +88,11 @@ spinner $!
 
 echo
 
-emerge sys-cluster/torque sys-cluster/openmpi net-fs/nfs-utils net-firewall/iptables 1> log/cluster.log 2> log/cluster.err.log &
-echo -n "Installing torque, openmpi, nfs-utils, and iptables..."
+emerge sys-cluster/torque sys-cluster/openmpi net-fs/nfs-utils net-misc/dhcp net-firewall/iptables 1> log/cluster.log 2> log/cluster.err.log &
+echo -n "Installing torque, openmpi, nfs-utils, dhcp, and iptables..."
 spinner $!
 
-echo "Taking a 30 second sleep..."
+echo "Taking a 30 second sleep...\n"
 sleep 30
 
 emerge dev-util/git dev-lang/ruby dev-ruby/rubygems 1> log/packages.log 2> log/packages.err.log &
@@ -93,4 +101,6 @@ spinner $!
 
 echo
 
-gem install --no-ri --no-rdoc highline 1> log/gem.log 2> log/gem.err.log &
+echo "iface_eth0=\"$lan_ip\" broadcast $lan_broadcast netmask $lan_netmask" > /etc/conf.d/net
+
+#gem install --no-ri --no-rdoc highline 1> log/gem.log 2> log/gem.err.log &
