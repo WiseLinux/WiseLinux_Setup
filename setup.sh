@@ -151,4 +151,13 @@ rc-update add nfs default
 rc-update add sshd default
 rc-update add ntpd default
 
-#gem install --no-ri --no-rdoc highline 1> log/gem.log 2> log/gem.err.log &
+wget http://medusa.mcs.uvawise.edu/~jta4j/wislinux/scripts/iptables.sh
+
+if [ -f iptables.sh ]; then
+	chmod +x iptables.sh
+else
+	exit
+fi
+
+iptables.sh $lan_ethernet $wan_ethernet $lan_subnet
+
