@@ -14,7 +14,7 @@ wan_ethernet="eth1" # This is for the interface that will connect to your networ
 	lan_broadcast="192.168.0.255" # The broadcast address for the lan adapter
 	lan_netmask="255.255.255.0"   # Netmask for the lan 
 
-	# Public network - If you want to use dhcp for this, just set each value to dhcp
+	# Public network - If you want to use dhcp for this, just set the value of wan_ip to dhcp
 
 	wan_ip="10.0.0.1"	 # The IP address of the master node on your network; if you use DHCP for this type dhcp in the quotes
 	wan_broadcast="10.0.0.255" 
@@ -22,15 +22,19 @@ wan_ethernet="eth1" # This is for the interface that will connect to your networ
 
 # Name servers that you would like to use
 # By Default the nameservers are set to OpenDNS
-name_server[0]="208.67.222.222"
-name_server[1]="208.67.220.220"
-name_server[2]=""
-name_server[3]=""
+name_server=( "208.67.222.222" "208.67.220.220" )
+
+# NTP server
+
+ntp_server=( "0.north-america.pool.ntp.org" "1.north-america.pool.ntp.org" "2.north-america.pool.ntp.org" "3.north-america.pool.ntp.org" )
 
 # MAUI Cluster Scheduler URL
 # In order to install MAUI, you need to download it and place it in a location that is accesiable by wget
 
-$maui_url = "http://www.example.com/maui.tar.gz"
+maui_url="http://www.example.com/maui.tar.gz"
+
+
+
 
 ##################################################################################################################
 #  DO NOT EDIT BELOW THIS LINE
@@ -88,11 +92,12 @@ spinner $!
 
 echo
 
-emerge sys-cluster/torque sys-cluster/openmpi net-fs/nfs-utils net-misc/dhcp net-firewall/iptables 1> log/cluster.log 2> log/cluster.err.log &
-echo -n "Installing torque, openmpi, nfs-utils, dhcp, and iptables..."
+emerge sys-cluster/torque sys-cluster/openmpi net-fs/nfs-utils net-misc/dhcp net-misc/ntp net-firewall/iptables 1> log/cluster.log 2> log/cluster.err.log &
+echo -n "Installing torque, openmpi, nfs-utils, dhcp, ntp, and iptables... "
 spinner $!
 
-echo "Taking a 30 second sleep...\n"
+echo "Taking a 30 second sleep... "
+echo
 sleep 30
 
 emerge dev-util/git dev-lang/ruby dev-ruby/rubygems 1> log/packages.log 2> log/packages.err.log &
@@ -101,6 +106,49 @@ spinner $!
 
 echo
 
-echo "iface_eth0=\"$lan_ip\" broadcast $lan_broadcast netmask $lan_netmask" > /etc/conf.d/net
+echo "Setting the system up... "
+echo
+
+echo "# LAN config" > /etc/conf.d/net																			
+echo "config_$lan_ethernet=( \"$lan_ip netmask $lan_netmask brd $lan_broadcast\" )" >> /etc/conf.d/net
+
+echo "" >> /etc/conf.d/net
+echo "# WAN config" >> /etc/conf.d/net
+if [ $wan_ip == "dhcp" ]; then
+	echo "config_$wam_ethernet=( \"dhcp\" )" >> /etc/conf.d/net
+else
+	echo "config_$wan_ethernet=( \"$wan_ip netmask $wan_netmask brd $wan_broadcast\" )" >> /etc/conf.d/net
+fi
+
+echo "/home/ *(rw)" > /etc/exports
+echo "portmap:$lan_subnet" > /etc/hosts.allow
+
+echo "NTPDATE_WARN=\"n\"" > /etc/conf.d/ntp
+echo "NTPDATE_CMD=\"ntpdate\"" >> /etc/conf.d/ntp
+echo "NTPDATE_OPTS=\"-b $ntp_server\"" >> /etc/conf.d/ntp
+
+echo "" > /etc/ntp.conf
+
+for server in ${ntp_server[@]}
+do
+	echo "server $server" >> /etc/ntp.conf
+	echo "restrict $server" >> /etc/ntp.conf
+done
+
+echo "stratum 10" >> /etc/ntp.conf
+echo "driftfile /etc/ntp.drift.server" >> /etc/ntp.conf
+echo "logfile /var/log/ntp" >> /etc/ntp.conf
+echo "broadcast $lan_broadcast" >> /etc/ntp.conf
+echo "restrict default kod" >> /etc/ntp.conf
+echo "restrict 127.0.0.1" >> /etc/ntp.conf
+echo "restrict $lan_subnet" >> /etc/ntp.conf
+
+ln -s /etc/init.d/net.lo /etc/init.d/net.eth1
+
+rc-update add net.eth0 default
+rc-update add net.eth1 default
+rc-update add nfs default
+rc-update add sshd default
+rc-update add ntpd default
 
 #gem install --no-ri --no-rdoc highline 1> log/gem.log 2> log/gem.err.log &
