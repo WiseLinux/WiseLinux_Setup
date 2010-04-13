@@ -40,9 +40,6 @@ maui_url="http://www.example.com/maui.tar.gz"
 #  DO NOT EDIT BELOW THIS LINE
 ##################################################################################################################
 
-
-
-
 spinner(){
 PROC=$1
 while [ -d /proc/$PROC ];do
@@ -65,12 +62,18 @@ fi
 echo "MAKEOPTS=\"-j$(($num_cores+1))\"" >> /etc/make.conf
 echo "USE=\"-* 3dnow gpm mmx ncurses pam sse tcpd fortran perl ruby\"" >> /etc/make.conf
 
-mkdir /etc/portage
-mkdir ./log
+if [ -d /etc/portage ]; then
+else	
+	mkdir /etc/portage
+fi
+
+if [ -d ./log ]; then
+else
+	mkdir ./log
+fi
 
 echo "dev-util/git threads bash-compleation" >> /etc/portage/package.use
 echo "dev-lang/ruby rubytests threads" >> /etc/portage/package.use
-echo "dev-ruby/rubygems -doc -server" >> /etc/portage/package.use
 echo "sys-cluster/torque server" >> /etc/portage/package.use
 echo "sys-cluster/openmpi pbs" >> /etc/portage/package.use
 
@@ -100,8 +103,8 @@ echo "Taking a 30 second sleep... "
 echo
 sleep 30
 
-emerge dev-util/git dev-lang/ruby dev-ruby/rubygems 1> log/packages.log 2> log/packages.err.log &
-echo -n "Installing git, ruby, and rubygems... "
+emerge dev-util/git dev-lang/ruby 1> log/packages.log 2> log/packages.err.log &
+echo -n "Installing git and ruby... "
 spinner $!
 
 echo
