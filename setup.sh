@@ -34,6 +34,15 @@ ntp_server=( "0.north-america.pool.ntp.org" "1.north-america.pool.ntp.org" "2.no
 maui_url="http://www.example.com/maui.tar.gz"
 
 
+# Package rebuild
+# To make WiseLinux customized for your system you should leave these set to true, but if you don't care change them to false
+# the install will be faster.  But your server will not be optimized!!
+
+rebuild_system=true
+rebuild_world=true
+
+
+
 
 
 ##################################################################################################################
@@ -84,27 +93,31 @@ emerge --sync 1> log/portage_sync.log 2> log/portage_sync.err.log &
 echo -n "Syncing portage... "
 spinner $!
 
-echo
+if [ $rebuild_system == true ]; then
 
-emerge -euND system 1> log/system_rebuild.log 2> log/system_rebuild.err.log &
-echo -n "Rebuilding system... "
-spinner $!
+	echo
 
-echo
+	emerge -euND system 1> log/system_rebuild.log 2> log/system_rebuild.err.log &
+	echo -n "Rebuilding system... "
+	spinner $!
 
-emerge -euND world 1> log/world_rebuild.log 2> log/system_rebuild.err.log &
-echo -n "Rebuilding world... "
-spinner $!
+fi
+
+if [ $rebuild_world == true ]; then
+
+	echo
+
+	emerge -euND world 1> log/world_rebuild.log 2> log/system_rebuild.err.log &
+	echo -n "Rebuilding world... "
+	spinner $!
+
+fi
 
 echo
 
 emerge sys-cluster/torque sys-cluster/openmpi net-fs/nfs-utils net-misc/dhcp net-misc/ntp net-firewall/iptables 1> log/cluster.log 2> log/cluster.err.log &
 echo -n "Installing torque, openmpi, nfs-utils, dhcp, ntp, and iptables... "
 spinner $!
-
-echo "Taking a 30 second sleep... "
-echo
-sleep 30
 
 emerge dev-util/git dev-lang/ruby 1> log/packages.log 2> log/packages.err.log &
 echo -n "Installing git and ruby... "
