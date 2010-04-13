@@ -51,31 +51,34 @@ done
 return 0
 }
 
-# Get the count of cores in the system
-num_cores=`grep 'core id' /proc/cpuinfo | sort -u | wc -l`
+if [ ! -e ./log/.stage1 ]; then
 
-if [ $num_cores -eq 0 ]; then
-  # this box is either an old SMP or single-CPU box, so count the # of processors
-  num_cores=`grep '^processor' /proc/cpuinfo | sort -u | wc -l`
+	# Get the count of cores in the system
+	num_cores=`grep 'core id' /proc/cpuinfo | sort -u | wc -l`
+
+	if [ $num_cores -eq 0 ]; then
+		# this box is either an old SMP or single-CPU box, so count the # of processors
+		num_cores=`grep '^processor' /proc/cpuinfo | sort -u | wc -l`
+	fi
+
+	echo "MAKEOPTS=\"-j$(($num_cores+1))\"" >> /etc/make.conf
+	echo "USE=\"-* 3dnow gpm mmx ncurses pam sse tcpd fortran perl ruby\"" >> /etc/make.conf
+
+	if [ ! -d /etc/portage ]; then	
+		mkdir /etc/portage
+	fi
+
+	if [ ! -d ./log ]; then
+		mkdir ./log
+	fi
+
+	echo "dev-util/git threads bash-compleation" > /etc/portage/package.use
+	echo "dev-lang/ruby rubytests threads" >> /etc/portage/package.use
+	echo "sys-cluster/torque server" >> /etc/portage/package.use
+	echo "sys-cluster/openmpi pbs" >> /etc/portage/package.use
+
+	touch ./log/.stage1
 fi
-
-echo "MAKEOPTS=\"-j$(($num_cores+1))\"" >> /etc/make.conf
-echo "USE=\"-* 3dnow gpm mmx ncurses pam sse tcpd fortran perl ruby\"" >> /etc/make.conf
-
-if [ -d /etc/portage ]; then
-else	
-	mkdir /etc/portage
-fi
-
-if [ -d ./log ]; then
-else
-	mkdir ./log
-fi
-
-echo "dev-util/git threads bash-compleation" >> /etc/portage/package.use
-echo "dev-lang/ruby rubytests threads" >> /etc/portage/package.use
-echo "sys-cluster/torque server" >> /etc/portage/package.use
-echo "sys-cluster/openmpi pbs" >> /etc/portage/package.use
 
 emerge --sync 1> log/portage_sync.log 2> log/portage_sync.err.log &
 echo -n "Syncing portage... "
