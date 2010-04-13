@@ -170,7 +170,7 @@ rc-update add nfs default
 rc-update add sshd default
 rc-update add ntpd default
 
-wget http://medusa.mcs.uvawise.edu/~jta4j/wislinux/scripts/iptables.sh
+wget http://medusa.mcs.uvawise.edu/~jta4j/wiselinux/scripts/iptables.sh
 
 if [ -f iptables.sh ]; then
 	chmod +x iptables.sh
